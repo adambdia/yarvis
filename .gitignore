@@ -1,6 +1,12 @@
 # Prerequisites
 *.d
 
+#idk
+.cache/
+
+# Neovim LSP support
+compile_commands.json
+
 #Build location directory
 build/
 
