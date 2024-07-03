@@ -3,6 +3,7 @@
 #include <libfreenect2/packet_pipeline.h>
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <ostream>
 #include <signal.h>
 
 
@@ -23,6 +24,7 @@ void frameHandler(cv::Mat receivedFrame, void* data)
     double max = 255.0;
     double threshold = (double)*((int*)data);
 
+    std::cout << "hello" std::endl;
     cv::normalize(receivedFrame, segmented, 0, 255, cv::NORM_MINMAX);
     segmented.convertTo(segmented, CV_8UC1);
     cv::threshold(segmented, segmented, threshold, max, cv::THRESH_TOZERO);
