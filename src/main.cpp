@@ -24,7 +24,7 @@ void frameHandler(cv::Mat receivedFrame, void* data)
     double max = 255.0;
     double threshold = (double)*((int*)data);
 
-    std::cout << "hello" std::endl;
+    std::cout << "hello" << std::endl;
     cv::normalize(receivedFrame, segmented, 0, 255, cv::NORM_MINMAX);
     segmented.convertTo(segmented, CV_8UC1);
     cv::threshold(segmented, segmented, threshold, max, cv::THRESH_TOZERO);
@@ -36,7 +36,7 @@ int main()
     libfreenect2::Freenect2 freenect2;
     libfreenect2::Freenect2Device *dev = 0;
     libfreenect2::PacketPipeline *pipeline = 0;
-    std::cout << "what it do flight crew" << std::endl;
+    std::cout << "hello" << std::endl;
     if (freenect2.enumerateDevices() == 0)
     {
         std::cout << "no device connected!" << std::endl;
