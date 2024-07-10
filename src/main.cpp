@@ -23,7 +23,8 @@ void frameHandler(cv::Mat receivedFrame, void* data)
     cv::Mat segmented;
     double max = 255.0;
     double threshold = (double)*((int*)data);
-
+    
+    std::cout   << "hi bryan" << std::endl;
     std::cout << "hello" << std::endl;
     cv::normalize(receivedFrame, segmented, 0, 255, cv::NORM_MINMAX);
     segmented.convertTo(segmented, CV_8UC1);
