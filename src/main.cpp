@@ -61,7 +61,7 @@ int main()
 
         cv::Mat(ir->height, ir->width, CV_32FC1, ir->data).copyTo(irFrame);
 
-        cv::imshow("ir", irFrame / 16384.0);
+        cv::imshow("ir", irFrame / 65536.0);
         
         cv::waitKey(1);
 
