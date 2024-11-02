@@ -49,8 +49,10 @@ int main()
     libfreenect2::Frame *ir = frames[libfreenect2::Frame::Ir];
     libfreenect2::Frame *color = frames[libfreenect2::Frame::Color];    cv::Mat(ir->height, ir->width, CV_32FC1, ir->data).copyTo(irFrame);    cv::imshow("ir", irFrame / 65536.0);
     
-    cv::waitKey(1);    listener.release(frames);
+    cv::waitKey(10);    
+    
 
+    listener.release(frames);
 
     dev->stop();
     dev->close();
