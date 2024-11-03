@@ -11,6 +11,44 @@
 
 namespace py = pybind11;
 
+class FrameData {
+public:
+    std::vector<uint8_t> rgb_data;
+    std::vector<float> depth_data;
+    std::vector<uint8_t> bgr_data;
+    int width;
+    int height;
+    
+    FrameData(libfreenect2::Frame* rgb, libfreenect2::Frame* depth) {
+        if (!rgb || !depth) {
+            throw std::runtime_error("FrameData: Null frame pointer received!");
+        }
+        
+        width = rgb->width;
+        height = rgb->height;
+        
+        try {
+            // Copy RGB data
+            size_t rgb_size = width * height * 4;
+            rgb_data.resize(rgb_size);
+            std::memcpy(rgb_data.data(), rgb->data, rgb_size);
+            
+            // Copy depth data
+            size_t depth_size = depth->width * depth->height * sizeof(float);
+            depth_data.resize(depth->width * depth->height);
+            std::memcpy(depth_data.data(), depth->data, depth_size);
+            
+            // Create BGR data
+            cv::Mat rgba(height, width, CV_8UC4, rgb_data.data());
+            cv::Mat bgr(height, width, CV_8UC3);
+            cv::cvtColor(rgba, bgr, cv::COLOR_RGBA2BGR);
+            bgr_data.resize(height * width * 3);
+            std::memcpy(bgr_data.data(), bgr.data, bgr_data.size());
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string("FrameData: Error processing frames: ") + e.what());
+        }
+    }
+};
 
 class KinectBridge {
 private:
