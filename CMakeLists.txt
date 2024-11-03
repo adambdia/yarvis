@@ -1,19 +1,29 @@
-cmake_minimum_required(VERSION 2.8)
-project(yarvis)
+cmake_minimum_required(VERSION 3.10)
+project(kinect_bridge)
 
-# Add all source files in the src directory to the SRC_LIST variable
-file(GLOB SRC_LIST src/*.cpp)
-
-add_executable(${PROJECT_NAME} ${SRC_LIST})
-
-# Find freenect and opencv, to set necessary variables
+# Find all required packages
 find_package(freenect2 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Python 3.10 COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 REQUIRED)
 
-# Include directories to get headers
-include_directories(${freenect2_INCLUDE_DIRS})
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+# Create the Python module
+pybind11_add_module(kinect_bridge src/kinect_bridge.cpp)
 
-# Link libraries with the project
-target_link_libraries(${PROJECT_NAME} ${freenect2_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
+# Include directories for the Python module
+target_include_directories(kinect_bridge PRIVATE
+    ${freenect2_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+)
+
+# Link libraries with the Python module
+target_link_libraries(kinect_bridge PRIVATE
+    ${freenect2_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
+
+# Set C++14 standard
+set_target_properties(kinect_bridge PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+)
