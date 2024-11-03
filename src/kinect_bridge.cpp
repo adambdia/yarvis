@@ -115,13 +115,13 @@ public:
                 throw std::runtime_error("Device not initialized!");
             }
 
-            std::cout << "Waiting for new frame..." << std::endl;
+            //std::cout << "Waiting for new frame..." << std::endl;
             if (!listener->waitForNewFrame(frames, 10 * 1000))
             {
                 throw std::runtime_error("Timeout waiting for frames!");
             }
 
-            std::cout << "Got new frame, processing..." << std::endl;
+            //std::cout << "Got new frame, processing..." << std::endl;
             libfreenect2::Frame *rgb = frames[libfreenect2::Frame::Color];
             libfreenect2::Frame *depth = frames[libfreenect2::Frame::Depth];
 
