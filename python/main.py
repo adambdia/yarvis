@@ -15,11 +15,13 @@ def main():
                 frames = kinect.get_frames()
                 # bgr_frame = frames['bgr']
                 depth_frame = frames['depth']
+                ir_frame = frames['ir']
                 
                 # Display the frames
                 #cv2.imshow('RGB', bgr_frame)
                 cv2.imshow('Depth', depth_frame / 4500.0)  # Normalize depth for visualization
-                
+                cv2.imshow('ir', ir_frame)
+
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                     

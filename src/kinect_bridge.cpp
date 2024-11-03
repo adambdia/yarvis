@@ -124,8 +124,9 @@ public:
             //std::cout << "Got new frame, processing..." << std::endl;
             libfreenect2::Frame *rgb = frames[libfreenect2::Frame::Color];
             libfreenect2::Frame *depth = frames[libfreenect2::Frame::Depth];
+            libfreenect2::Frame *ir = frames[libfreenect2::Frame::Ir];
 
-            if (!rgb || !depth)
+            if (!rgb || !depth || !ir)
             {
                 listener->release(frames);
                 throw std::runtime_error("Failed to get valid frames!");
@@ -145,11 +146,16 @@ public:
 
             py::array_t<float> depth_array({depth->height, depth->width},
                                            {depth->width * sizeof(float), sizeof(float)},
-                                           reinterpret_cast<float *>(depth->data));
+                                           reinterpret_cast<float*>(depth->data));
+            
+            py::array_t<float> ir_array({ir->height, ir->width}, 
+                                          {ir->width * sizeof(float), sizeof(float)},
+                                          reinterpret_cast<float*>(ir->data));
 
             // Create copies of the data since we'll release the frames
             // py::array_t<uint8_t> rgb_copy = copy_array(rgb_array);
             py::array_t<float> depth_copy = copy_array(depth_array);
+            py::array_t<float> ir_copy = copy_array(ir_array);
 
             // Release the frames
             listener->release(frames);
@@ -158,6 +164,7 @@ public:
             py::dict result;
             // result["rgb"] = rgb_copy;
             result["depth"] = depth_copy;
+            result["ir"] = ir_copy;
             return result;
         }
         catch (const std::exception &e)
