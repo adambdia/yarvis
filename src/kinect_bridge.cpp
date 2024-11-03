@@ -20,6 +20,10 @@ public:
     int height;
     
     FrameData(libfreenect2::Frame* rgb, libfreenect2::Frame* depth) {
+        if (!rgb || !depth) {
+            throw std::runtime_error("Null frame pointer!");
+        }
+        
         width = rgb->width;
         height = rgb->height;
         
@@ -35,7 +39,7 @@ public:
         
         // Create BGR data
         cv::Mat rgba(height, width, CV_8UC4, rgb_data.data());
-        cv::Mat bgr;
+        cv::Mat bgr(height, width, CV_8UC3);
         cv::cvtColor(rgba, bgr, cv::COLOR_RGBA2BGR);
         bgr_data.resize(height * width * 3);
         std::memcpy(bgr_data.data(), bgr.data, bgr_data.size());
@@ -45,24 +49,45 @@ public:
 class KinectBridge {
 private:
     libfreenect2::Freenect2 freenect2;
-    libfreenect2::Freenect2Device *dev = nullptr;
-    libfreenect2::PacketPipeline *pipeline = nullptr;
-    libfreenect2::SyncMultiFrameListener listener;
+    std::unique_ptr<libfreenect2::Freenect2Device> dev;
+    std::unique_ptr<libfreenect2::SyncMultiFrameListener> listener;
     libfreenect2::FrameMap frames;
     std::shared_ptr<FrameData> current_frame;
     
 public:
-    KinectBridge() : listener(libfreenect2::Frame::Color | libfreenect2::Frame::Depth | libfreenect2::Frame::Ir) {
+    KinectBridge() {
         if(freenect2.enumerateDevices() == 0) {
             throw std::runtime_error("No Kinect devices found!");
         }
         
-        pipeline = new libfreenect2::OpenGLPacketPipeline();
-        dev = freenect2.openDevice(0, pipeline);
+        // Create pipeline
+        auto pipeline = std::make_unique<libfreenect2::OpenGLPacketPipeline>();
+        if (!pipeline) {
+            pipeline = std::make_unique<libfreenect2::OpenCLPacketPipeline>();
+        }
+        if (!pipeline) {
+            pipeline = std::make_unique<libfreenect2::CpuPacketPipeline>();
+        }
         
-        dev->setColorFrameListener(&listener);
-        dev->setIrAndDepthFrameListener(&listener);
-        dev->start();
+        // Open device with pipeline
+        dev.reset(freenect2.openDefaultDevice(pipeline.release()));
+        if (!dev) {
+            throw std::runtime_error("Failed to open Kinect device!");
+        }
+        
+        // Create listener
+        listener = std::make_unique<libfreenect2::SyncMultiFrameListener>(
+            libfreenect2::Frame::Color | 
+            libfreenect2::Frame::Depth | 
+            libfreenect2::Frame::Ir
+        );
+        
+        dev->setColorFrameListener(listener.get());
+        dev->setIrAndDepthFrameListener(listener.get());
+        
+        if (!dev->start()) {
+            throw std::runtime_error("Failed to start Kinect device!");
+        }
     }
     
     ~KinectBridge() {
@@ -70,54 +95,68 @@ public:
             dev->stop();
             dev->close();
         }
-        delete pipeline;
     }
     
     py::dict getFrames() {
-        if(!listener.waitForNewFrame(frames, 10*1000)) {
+        if (!listener) {
+            throw std::runtime_error("Device not initialized!");
+        }
+        
+        if(!listener->waitForNewFrame(frames, 10*1000)) {
             throw std::runtime_error("Timeout waiting for frames!");
         }
         
-        libfreenect2::Frame *rgb = frames[libfreenect2::Frame::Color];
-        libfreenect2::Frame *depth = frames[libfreenect2::Frame::Depth];
-        
-        // Create new frame data
-        current_frame = std::make_shared<FrameData>(rgb, depth);
-        
-        // Now we can release the original frames
-        listener.release(frames);
-        
-        // Create numpy arrays that view our copied data
-        py::array_t<uint8_t> rgb_array({current_frame->height, 
-                                       current_frame->width, 
-                                       4},
-                                      {current_frame->width*4, 
-                                       4, 
-                                       1},
-                                      current_frame->rgb_data.data(),
-                                      py::cast(current_frame));  // Keep frame data alive
-        
-        py::array_t<float> depth_array({current_frame->height, 
-                                       current_frame->width},
-                                      {current_frame->width*sizeof(float), 
-                                       sizeof(float)},
-                                      current_frame->depth_data.data(),
-                                      py::cast(current_frame));  // Keep frame data alive
-        
-        py::array_t<uint8_t> bgr_array({current_frame->height, 
-                                       current_frame->width, 
-                                       3},
-                                      {current_frame->width*3, 
-                                       3, 
-                                       1},
-                                      current_frame->bgr_data.data(),
-                                      py::cast(current_frame));  // Keep frame data alive
-        
-        py::dict result;
-        result["rgb"] = rgb_array;
-        result["depth"] = depth_array;
-        result["bgr"] = bgr_array;
-        return result;
+        try {
+            libfreenect2::Frame *rgb = frames[libfreenect2::Frame::Color];
+            libfreenect2::Frame *depth = frames[libfreenect2::Frame::Depth];
+            
+            if (!rgb || !depth) {
+                listener->release(frames);
+                throw std::runtime_error("Failed to get valid frames!");
+            }
+            
+            // Create new frame data
+            current_frame = std::make_shared<FrameData>(rgb, depth);
+            
+            // Release the original frames
+            listener->release(frames);
+            
+            // Create numpy arrays that view our copied data
+            py::array_t<uint8_t> rgb_array({current_frame->height, 
+                                           current_frame->width, 
+                                           4},
+                                          {current_frame->width*4, 
+                                           4, 
+                                           1},
+                                          current_frame->rgb_data.data(),
+                                          py::cast(current_frame));
+            
+            py::array_t<float> depth_array({current_frame->height, 
+                                           current_frame->width},
+                                          {current_frame->width*sizeof(float), 
+                                           sizeof(float)},
+                                          current_frame->depth_data.data(),
+                                          py::cast(current_frame));
+            
+            py::array_t<uint8_t> bgr_array({current_frame->height, 
+                                           current_frame->width, 
+                                           3},
+                                          {current_frame->width*3, 
+                                           3, 
+                                           1},
+                                          current_frame->bgr_data.data(),
+                                          py::cast(current_frame));
+            
+            py::dict result;
+            result["rgb"] = rgb_array;
+            result["depth"] = depth_array;
+            result["bgr"] = bgr_array;
+            return result;
+            
+        } catch (const std::exception& e) {
+            listener->release(frames);
+            throw;
+        }
     }
 };
 
