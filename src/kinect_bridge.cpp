@@ -11,44 +11,31 @@
 
 namespace py = pybind11;
 
-class FrameData {
-public:
-    std::vector<uint8_t> rgb_data;
-    std::vector<float> depth_data;
-    std::vector<uint8_t> bgr_data;
-    int width;
-    int height;
+template <typename T>
+py::array_t<T> copy_array(const py::array_t<T>& input) {
+    // Request a buffer descriptor from Python
+    py::buffer_info buf = input.request();
     
-    FrameData(libfreenect2::Frame* rgb, libfreenect2::Frame* depth) {
-        if (!rgb || !depth) {
-            throw std::runtime_error("FrameData: Null frame pointer received!");
-        }
-        
-        width = rgb->width;
-        height = rgb->height;
-        
-        try {
-            // Copy RGB data
-            size_t rgb_size = width * height * 4;
-            rgb_data.resize(rgb_size);
-            std::memcpy(rgb_data.data(), rgb->data, rgb_size);
-            
-            // Copy depth data
-            size_t depth_size = depth->width * depth->height * sizeof(float);
-            depth_data.resize(depth->width * depth->height);
-            std::memcpy(depth_data.data(), depth->data, depth_size);
-            
-            // Create BGR data
-            cv::Mat rgba(height, width, CV_8UC4, rgb_data.data());
-            cv::Mat bgr(height, width, CV_8UC3);
-            cv::cvtColor(rgba, bgr, cv::COLOR_RGBA2BGR);
-            bgr_data.resize(height * width * 3);
-            std::memcpy(bgr_data.data(), bgr.data, bgr_data.size());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("FrameData: Error processing frames: ") + e.what());
-        }
+    // Create a new array with same shape and data type
+    py::array_t<T> result(buf.shape);
+    
+    // Get pointers to input and output buffers
+    auto result_buf = result.request();
+    T* ptr_in = static_cast<T*>(buf.ptr);
+    T* ptr_out = static_cast<T*>(result_buf.ptr);
+    
+    // Calculate total size
+    size_t total_size = 1;
+    for (size_t i = 0; i < buf.shape.size(); i++) {
+        total_size *= buf.shape[i];
     }
-};
+    
+    // Copy the data
+    std::memcpy(ptr_out, ptr_in, sizeof(T) * total_size);
+    
+    return result;
+}
+
 
 class KinectBridge {
 private:
@@ -148,9 +135,9 @@ public:
                                          bgr_mat.data);
             
             // Create copies of the data since we'll release the frames
-            py::array_t<uint8_t> rgb_copy = rgb_array.copy();
-            py::array_t<float> depth_copy = depth_array.copy();
-            py::array_t<uint8_t> bgr_copy = bgr_array.copy();
+            py::array_t<uint8_t> rgb_copy = copy_array(rgb_array);
+            py::array_t<float> depth_copy = copy_array(depth_array);
+            py::array_t<uint8_t> bgr_copy = copy_array(bgr_array);
             
             // Release the frames
             listener->release(frames);
