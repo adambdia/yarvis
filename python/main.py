@@ -1,10 +1,13 @@
 import cv2
 from kinect_bridge import KinectBridge
+import sys
+import traceback
 
 def main():
     try:
-        # Initialize Kinect
+        print("Initializing Kinect...")
         kinect = KinectBridge()
+        print("Kinect initialized successfully")
         
         while True:
             try:
@@ -22,13 +25,18 @@ def main():
                     
             except RuntimeError as e:
                 print(f"Frame capture error: {e}")
+                print("Stack trace:")
+                traceback.print_exc()
                 continue
                 
     except Exception as e:
         print(f"Error: {e}")
+        print("Stack trace:")
+        traceback.print_exc()
         
     finally:
         cv2.destroyAllWindows()
+        print("Cleaning up...")
 
 if __name__ == "__main__":
     main()
