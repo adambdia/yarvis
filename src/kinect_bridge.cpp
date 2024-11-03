@@ -60,17 +60,8 @@ public:
             throw std::runtime_error("No Kinect devices found!");
         }
         
-        // Create pipeline
-        auto pipeline = std::make_unique<libfreenect2::OpenGLPacketPipeline>();
-        if (!pipeline) {
-            pipeline = std::make_unique<libfreenect2::OpenCLPacketPipeline>();
-        }
-        if (!pipeline) {
-            pipeline = std::make_unique<libfreenect2::CpuPacketPipeline>();
-        }
-        
-        // Open device with pipeline
-        dev.reset(freenect2.openDefaultDevice(pipeline.release()));
+        // Open device without pipeline
+        dev.reset(freenect2.openDefaultDevice());
         if (!dev) {
             throw std::runtime_error("Failed to open Kinect device!");
         }
