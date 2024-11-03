@@ -11,44 +11,6 @@
 
 namespace py = pybind11;
 
-class FrameData {
-public:
-    std::vector<uint8_t> rgb_data;
-    std::vector<float> depth_data;
-    std::vector<uint8_t> bgr_data;
-    int width;
-    int height;
-    
-    FrameData(libfreenect2::Frame* rgb, libfreenect2::Frame* depth) {
-        if (!rgb || !depth) {
-            throw std::runtime_error("FrameData: Null frame pointer received!");
-        }
-        
-        width = rgb->width;
-        height = rgb->height;
-        
-        try {
-            // Copy RGB data
-            size_t rgb_size = width * height * 4;
-            rgb_data.resize(rgb_size);
-            std::memcpy(rgb_data.data(), rgb->data, rgb_size);
-            
-            // Copy depth data
-            size_t depth_size = depth->width * depth->height * sizeof(float);
-            depth_data.resize(depth->width * depth->height);
-            std::memcpy(depth_data.data(), depth->data, depth_size);
-            
-            // Create BGR data
-            cv::Mat rgba(height, width, CV_8UC4, rgb_data.data());
-            cv::Mat bgr(height, width, CV_8UC3);
-            cv::cvtColor(rgba, bgr, cv::COLOR_RGBA2BGR);
-            bgr_data.resize(height * width * 3);
-            std::memcpy(bgr_data.data(), bgr.data, bgr_data.size());
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("FrameData: Error processing frames: ") + e.what());
-        }
-    }
-};
 
 class KinectBridge {
 private:
@@ -56,7 +18,6 @@ private:
     libfreenect2::Freenect2Device* dev = nullptr;
     libfreenect2::SyncMultiFrameListener* listener = nullptr;
     libfreenect2::FrameMap frames;
-    std::shared_ptr<FrameData> current_frame;
     
 public:
     KinectBridge() {
@@ -129,42 +90,38 @@ public:
                 throw std::runtime_error("Failed to get valid frames!");
             }
             
-            // Create new frame data
-            current_frame = std::make_shared<FrameData>(rgb, depth);
+            // Create numpy arrays directly from the frame data
+            py::array_t<uint8_t> rgb_array({rgb->height, rgb->width, 4},
+                                         {rgb->width*4, 4, 1},
+                                         static_cast<uint8_t*>(rgb->data));
             
-            // Release the original frames
+            py::array_t<float> depth_array({depth->height, depth->width},
+                                         {depth->width*sizeof(float), sizeof(float)},
+                                         static_cast<float*>(depth->data));
+            
+            // Convert RGB to BGR
+            cv::Mat rgba_mat(rgb->height, rgb->width, CV_8UC4, rgb->data);
+            cv::Mat bgr_mat;
+            cv::cvtColor(rgba_mat, bgr_mat, cv::COLOR_RGBA2BGR);
+            
+            // Create BGR array
+            py::array_t<uint8_t> bgr_array({rgb->height, rgb->width, 3},
+                                         {rgb->width*3, 3, 1},
+                                         bgr_mat.data);
+            
+            // Create copies of the data since we'll release the frames
+            py::array_t<uint8_t> rgb_copy = rgb_array.copy();
+            py::array_t<float> depth_copy = depth_array.copy();
+            py::array_t<uint8_t> bgr_copy = bgr_array.copy();
+            
+            // Release the frames
             listener->release(frames);
             
-            // Create numpy arrays that view our copied data
-            py::array_t<uint8_t> rgb_array({current_frame->height, 
-                                           current_frame->width, 
-                                           4},
-                                          {current_frame->width*4, 
-                                           4, 
-                                           1},
-                                          current_frame->rgb_data.data(),
-                                          py::cast(current_frame));
-            
-            py::array_t<float> depth_array({current_frame->height, 
-                                           current_frame->width},
-                                          {current_frame->width*sizeof(float), 
-                                           sizeof(float)},
-                                          current_frame->depth_data.data(),
-                                          py::cast(current_frame));
-            
-            py::array_t<uint8_t> bgr_array({current_frame->height, 
-                                           current_frame->width, 
-                                           3},
-                                          {current_frame->width*3, 
-                                           3, 
-                                           1},
-                                          current_frame->bgr_data.data(),
-                                          py::cast(current_frame));
-            
+            // Return the copied arrays
             py::dict result;
-            result["rgb"] = rgb_array;
-            result["depth"] = depth_array;
-            result["bgr"] = bgr_array;
+            result["rgb"] = rgb_copy;
+            result["depth"] = depth_copy;
+            result["bgr"] = bgr_copy;
             return result;
             
         } catch (const std::exception& e) {
