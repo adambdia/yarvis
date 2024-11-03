@@ -117,12 +117,14 @@ public:
             
             // Create numpy arrays directly from the frame data
             py::array_t<uint8_t> rgb_array({rgb->height, rgb->width, 4},
-                                         {rgb->width*4, 4, 1},
+                                         {rgb->width * 4 * sizeof(uint8_t),    
+                                          4 * sizeof(uint8_t),                 
+                                          sizeof(uint8_t)},                    
                                          static_cast<uint8_t*>(rgb->data));
             
             py::array_t<float> depth_array({depth->height, depth->width},
                                          {depth->width*sizeof(float), sizeof(float)},
-                                         static_cast<float*>(depth->data));
+                                         reinterpret_cast<float*>(depth->data));
             
             // Convert RGB to BGR
             cv::Mat rgba_mat(rgb->height, rgb->width, CV_8UC4, rgb->data);
