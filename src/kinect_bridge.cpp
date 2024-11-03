@@ -117,10 +117,8 @@ public:
             
             // Create numpy arrays directly from the frame data
             py::array_t<uint8_t> rgb_array({rgb->height, rgb->width, 4},
-                                         {rgb->width * 4 * sizeof(uint8_t),    
-                                          4 * sizeof(uint8_t),                 
-                                          sizeof(uint8_t)},                    
-                                         static_cast<uint8_t*>(rgb->data));
+                                         {rgb->width * 4 * sizeof(uint8_t), 4 * sizeof(uint8_t), sizeof(uint8_t)},                    
+                                         reinterpret_cast<uint8_t*>(rgb->data));
             
             py::array_t<float> depth_array({depth->height, depth->width},
                                          {depth->width*sizeof(float), sizeof(float)},
