@@ -131,24 +131,24 @@ public:
                 throw std::runtime_error("Failed to get valid frames!");
             }
 
-            // Create numpy arrays directly from the frame data
-            py::array_t<uint8_t> rgb_array(
-                py::buffer_info(
-                    static_cast<uint8_t *>(rgb->data),        // Pointer to data
-                    sizeof(uint8_t),                          // Size of one scalar
-                    py::format_descriptor<uint8_t>::format(), // Python struct-style format descriptor
-                    3,                                        // Number of dimensions
-                    {rgb->height, rgb->width, 4},             // Shape
-                    {rgb->width * 4,                          // Strides (in elements)
-                     4,
-                     1}));
+            // // Create numpy arrays directly from the frame data
+            // py::array_t<uint8_t> rgb_array(
+            //     py::buffer_info(
+            //         static_cast<uint8_t *>(rgb->data),        // Pointer to data
+            //         sizeof(uint8_t),                          // Size of one scalar
+            //         py::format_descriptor<uint8_t>::format(), // Python struct-style format descriptor
+            //         3,                                        // Number of dimensions
+            //         {rgb->height, rgb->width, 4},             // Shape
+            //         {rgb->width * 4,                          // Strides (in elements)
+            //          4,
+            //          1}));
 
             py::array_t<float> depth_array({depth->height, depth->width},
                                            {depth->width * sizeof(float), sizeof(float)},
                                            reinterpret_cast<float *>(depth->data));
 
             // Create copies of the data since we'll release the frames
-            py::array_t<uint8_t> rgb_copy = copy_array(rgb_array);
+            // py::array_t<uint8_t> rgb_copy = copy_array(rgb_array);
             py::array_t<float> depth_copy = copy_array(depth_array);
 
             // Release the frames
@@ -156,7 +156,7 @@ public:
 
             // Return the copied arrays
             py::dict result;
-            result["rgb"] = rgb_copy;
+            // result["rgb"] = rgb_copy;
             result["depth"] = depth_copy;
             return result;
         }
