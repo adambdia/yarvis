@@ -33,7 +33,7 @@ def main():
                 #cv2.imshow('Depth', depth_frame / 4500.0)  # Normalize depth for visualization
                 #cv2.imshow('ir', ir_frame / 65536.0)
                 ir_frame = ir_frame / 65536.0
-                ir_frame = ir_frame.astype(np.int8)
+                ir_frame = ir_frame.astype(np.uint8)
 
                 results = pose.process(cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2RGB))
 
