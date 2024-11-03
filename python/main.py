@@ -20,7 +20,7 @@ def main():
                 # Display the frames
                 #cv2.imshow('RGB', bgr_frame)
                 cv2.imshow('Depth', depth_frame / 4500.0)  # Normalize depth for visualization
-                cv2.imshow('ir', ir_frame)
+                cv2.imshow('ir', ir_frame / 65536.0)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
