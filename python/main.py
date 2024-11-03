@@ -32,17 +32,17 @@ def main():
                 #cv2.imshow('RGB', bgr_frame)
                 #cv2.imshow('Depth', depth_frame / 4500.0)  # Normalize depth for visualization
                 #cv2.imshow('ir', ir_frame / 65536.0)
-                ir_frame = ir_frame / 65536.0
+                #ir_frame = ir_frame / 65536.0
                 ir_frame = ir_frame.astype(np.uint8)
 
-                results = pose.process(cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2RGB))
+                # results = pose.process(cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2RGB))
 
-                if results.pose_landmarks:
-                    mp_draw.draw_landmarks(
-                    ir_frame,
-                    results.pose_landmarks,
-                    mp_pose.POSE_CONNECTIONS
-                    )
+                # if results.pose_landmarks:
+                #     mp_draw.draw_landmarks(
+                #     ir_frame,
+                #     results.pose_landmarks,
+                #     mp_pose.POSE_CONNECTIONS
+                #     )
 
                 cv2.imshow('Kinect MediaPipe', ir_frame)
 
