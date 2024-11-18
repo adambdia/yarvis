@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import cv2
 from kinect_bridge import KinectBridge
 import traceback
