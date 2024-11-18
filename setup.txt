@@ -1,0 +1,11 @@
+clone and install libfreenect2
+clone yarvis
+make a folder in your home called models
+download mediapipe model into models 
+make a venv in yarvis root
+activate venv
+install packages from requirements.txt
+make a build folder in yarvis and cd into it
+add PYTHONPATH and MODELPATH environment variables to your .bashrc set to the build folder and models folder respectively 
+run cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/freenect2
+you can now run in python folder with ./main.py
