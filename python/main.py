@@ -58,74 +58,71 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 def display_result(result, output_image, timestamp_ms):
   global DETECTION_RESULT
   DETECTION_RESULT = result
-  
-
 
 def main():
-    start_time = time.time_ns()
-    BaseOptions = mp.tasks.BaseOptions
-    HandLandmarker = mp.tasks.vision.HandLandmarker
-    HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-    HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
-    VisionRunningMode = mp.tasks.vision.RunningMode
-    
-    options = HandLandmarkerOptions(
-    base_options=BaseOptions(model_asset_path=os.path.expandvars('$MODELPATH/hand_landmarker.task')),
-    running_mode=VisionRunningMode.LIVE_STREAM,
-    result_callback=display_result)
-    
+  start_time = time.time_ns()
+  BaseOptions = mp.tasks.BaseOptions
+  HandLandmarker = mp.tasks.vision.HandLandmarker
+  HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+  HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
+  VisionRunningMode = mp.tasks.vision.RunningMode
+  
+  options = HandLandmarkerOptions(
+  base_options=BaseOptions(model_asset_path=os.path.expandvars('$MODELPATH/hand_landmarker.task')),
+  running_mode=VisionRunningMode.LIVE_STREAM,
+  result_callback=display_result)
+  
 
-    try:
-        print("Initializing Kinect...")
-        kinect = KinectBridge()
-        print("Kinect initialized successfully")
-        with HandLandmarker.create_from_options(options) as landmarker:
-          while True:
-              try:
-                  # Get frames from Kinect
-                  frames = kinect.get_frames()
-                  time_stamp = (time.time_ns() - start_time) * 1000
-                  # bgr_frame = frames['bgr']
-                  depth_frame = frames['depth']
-                  ir_frame = frames['ir']
-                  
-                  ir_frame = ir_frame / 256.0
-                  ir_frame = ir_frame.astype(np.uint8)
-                  ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
-                  mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-                  landmarker.detect_async(mp_image, time_stamp)
-                  
-                  if DETECTION_RESULT:
-                    if DETECTION_RESULT.hand_landmarks:
-                       index_tip = DETECTION_RESULT.hand_landmarks[0][8]
-                       x, y = int(index_tip.x*mp_image.width), int(index_tip.y*mp_image.height)
-                       print(depth_frame[y][x])
-                       #print(x,y)
-                    #   cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
-                    
-                    ir_frame = draw_landmarks_on_image(ir_frame, DETECTION_RESULT)
-                  
-                  cv2.imshow('Depth', depth_frame / 4500.0 )  # Normalize depth for visualization
-                  cv2.imshow('IR', ir_frame)
-
-
-                  if cv2.waitKey(1) & 0xFF == ord('q'):
-                      break
-                      
-              except RuntimeError as e:
-                  print(f"Frame capture error: {e}")
-                  print("Stack trace:")
-                  traceback.print_exc()
-                  continue
+  try:
+      print("Initializing Kinect...")
+      kinect = KinectBridge()
+      print("Kinect initialized successfully")
+      with HandLandmarker.create_from_options(options) as landmarker:
+        while True:
+            try:
+                # Get frames from Kinect
+                frames = kinect.get_frames()
+                time_stamp = (time.time_ns() - start_time) * 1000
+                # bgr_frame = frames['bgr']
+                depth_frame = frames['depth']
+                ir_frame = frames['ir']
                 
-    except Exception as e:
-        print(f"Error: {e}")
-        print("Stack trace:")
-        traceback.print_exc()
-        
-    finally:
-        cv2.destroyAllWindows()
-        print("Cleaning up...")
+                ir_frame = ir_frame / 256.0
+                ir_frame = ir_frame.astype(np.uint8)
+                ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+                landmarker.detect_async(mp_image, time_stamp)
+                x = y = z = 0
+                if DETECTION_RESULT:
+                  if DETECTION_RESULT.hand_landmarks:
+                      index_tip = DETECTION_RESULT.hand_landmarks[0][8]
+                      x, y = int(index_tip.x*mp_image.width), int(index_tip.y*mp_image.height)
+                      z = depth_frame[y][x]
+                      #print(x,y)
+                  #   cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
+                  
+                  ir_frame = draw_landmarks_on_image(ir_frame, DETECTION_RESULT)
+                #cv2.imshow('Depth', depth_frame / 4500.0 )  # Normalize depth for visualization
+                cv2.imshow('IR', ir_frame)
+
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                    
+            except RuntimeError as e:
+                print(f"Frame capture error: {e}")
+                print("Stack trace:")
+                traceback.print_exc()
+                continue
+              
+  except Exception as e:
+      print(f"Error: {e}")
+      print("Stack trace:")
+      traceback.print_exc()
+      
+  finally:
+      cv2.destroyAllWindows()
+      print("Cleaning up...")
 
 if __name__ == "__main__":
     main()
