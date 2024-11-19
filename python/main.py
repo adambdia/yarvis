@@ -69,7 +69,7 @@ def main():
   VisionRunningMode = mp.tasks.vision.RunningMode
   
   options = HandLandmarkerOptions(
-  base_options=BaseOptions(model_asset_path=os.path.expandvars('$MODELPATH/hand_landmarker.task')),
+  base_options=BaseOptions(model_asset_path=os.path.expandvars('$YARVISPATH/models/hand_landmarker.task')),
   running_mode=VisionRunningMode.LIVE_STREAM,
   result_callback=display_result)
   
