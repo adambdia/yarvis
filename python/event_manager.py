@@ -11,4 +11,5 @@ class Event_Manager():
         if value is None: raise ValueError('Value passed to event cannot be None')
         if not event_name: raise ValueError('event_name cannot be an empty string')
         self.events[event_name] = value
-        
+    
+    def view_event(self): print(self.events) # For DEBUGGING
