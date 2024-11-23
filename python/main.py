@@ -3,17 +3,13 @@ import cv2
 from kinect_bridge import KinectBridge
 import traceback
 import numpy as np
-import os
 import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import time
 from event_manager import Event_Manager
+from hand_landmarker import HandLandmarker
 
-
-DETECTION_RESULT = None
 
 def draw_landmarks_on_image(rgb_image, detection_result):
   hand_landmarks_list = detection_result.hand_landmarks
@@ -57,37 +53,16 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
   return annotated_image
 
-def display_result(result, output_image, timestamp_ms):
-  global DETECTION_RESULT
-  DETECTION_RESULT = result
-
-def func1(event_manager: Event_Manager):
-    event_manager.write_event('dog', 1)
-  
-def func2(event_manager: Event_Manager):
-  x = event_manager.read_event('dog')
-  print(x)  
-  
 
 def main():
-  start_time = time.time_ns()
-  BaseOptions = mp.tasks.BaseOptions
-  HandLandmarker = mp.tasks.vision.HandLandmarker
-  HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-  HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
-  VisionRunningMode = mp.tasks.vision.RunningMode
-  
-  options = HandLandmarkerOptions(
-  base_options=BaseOptions(model_asset_path=os.path.expandvars('$YARVISPATH/models/hand_landmarker.task')),
-  running_mode=VisionRunningMode.LIVE_STREAM,
-  result_callback=display_result)
-  
-  event_manager = Event_Manager()
-  try:
-      print("Initializing Kinect...")
-      kinect = KinectBridge()
-      print("Kinect initialized successfully")
-      with HandLandmarker.create_from_options(options) as landmarker:
+    start_time = time.time_ns()
+    event_manager = Event_Manager()
+    hand_detector = HandLandmarker(event_manager)
+
+    try:
+        print("Initializing Kinect...")
+        kinect = KinectBridge()
+        print("Kinect initialized successfully")
         while True:
             try:
                 # Get frames from Kinect
@@ -95,27 +70,27 @@ def main():
                 time_stamp = (time.time_ns() - start_time) * 1000
                 # bgr_frame = frames['bgr']
                 depth_frame = frames['depth']
-                ir_frame = frames['ir']
-                func1(event_manager)
-                func2(event_manager)                
+                ir_frame = frames['ir']              
                 ir_frame = ir_frame / 256.0
                 ir_frame = ir_frame.astype(np.uint8)
                 ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
+
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-                landmarker.detect_async(mp_image, time_stamp)
-                x = y = z = 0
-                if DETECTION_RESULT:
-                  if DETECTION_RESULT.hand_landmarks:
-                      index_tip = DETECTION_RESULT.hand_landmarks[0][8]
-                      x, y = int(index_tip.x*mp_image.width), int(index_tip.y*mp_image.height)
-                      z = depth_frame[y][x]
-                      #print(x,y)
-                  #   cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
-                  
-                  ir_frame = draw_landmarks_on_image(ir_frame, DETECTION_RESULT)
+                hand_detector.detect_async(mp_image, time_stamp)
+                
+                if event_manager.read_event('hand_detected'): 
+                    detection_result = hand_detector.get_latest_result()
+                    ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
+
+                    x = event_manager.read_event('index_tip_x')
+                    y = event_manager.read_event('index_tip_y')
+                    z = depth_frame[y][x]
+
+                    #cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
+                
                 #cv2.imshow('Depth', depth_frame / 4500.0 )  # Normalize depth for visualization
                 cv2.imshow('IR', ir_frame)
-
+                event_manager.view_event()
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -125,15 +100,12 @@ def main():
                 print("Stack trace:")
                 traceback.print_exc()
                 continue
-              
-  except Exception as e:
-      print(f"Error: {e}")
-      print("Stack trace:")
-      traceback.print_exc()
-      
-  finally:
-      cv2.destroyAllWindows()
-      print("Cleaning up...")
+    
+    finally:
+        hand_detector.close()
+        cv2.destroyAllWindows()
+        print("Cleaning up...")
+
 
 if __name__ == "__main__":
     main()
