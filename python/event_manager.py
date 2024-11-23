@@ -4,7 +4,7 @@ class Event_Manager():
         self.events = {}
         
     def read_event(self, event_name: str):
-        if not event_name: raise ValueError('event_name cannot be an empty string')
+        if event_name not in self.events.keys(): raise IndexError('\"{}\" event does not exist'.format(event_name))
         return self.events[event_name]
     
     def write_event(self, event_name: str, value: any) -> None:
