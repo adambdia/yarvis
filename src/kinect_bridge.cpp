@@ -3,6 +3,7 @@
 #include <libfreenect2/frame_listener_impl.h>
 #include <libfreenect2/registration.h>
 #include <libfreenect2/packet_pipeline.h>
+#include <libfreenect2/logger.h>
 #include <opencv2/opencv.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -49,6 +50,7 @@ private:
 public:
     KinectBridge()
     {
+        libfreenect2::setGlobalLogger(NULL);
         try
         {
             if (freenect2.enumerateDevices() == 0)
