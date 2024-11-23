@@ -82,8 +82,11 @@ def main():
                     detection_result = hand_detector.get_latest_result()
                     ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
 
-                    x = event_manager.read_event('index_tip_x')
-                    y = event_manager.read_event('index_tip_y')
+                    landmarks = detection_result.hand_landmarks[0]
+                    index_tip = landmarks[HandLandmarker.KEY_POINTS['INDEX_FINGER_TIP']]
+
+                    x = int(index_tip.x * ir_frame.shape[1])
+                    y = int(index_tip.y * ir_frame.shape[0])
                     z = depth_frame[y][x]
 
                     #cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)

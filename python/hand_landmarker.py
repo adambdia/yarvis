@@ -3,35 +3,36 @@ import os
 from functools import partial
 from event_manager import Event_Manager
 
-KEY_POINTS = {
-    'thumb_tip': 4,
-    'thumb_ip': 3,
-    'thumb_mcp': 2,
-    
-    'index_tip': 8,
-    'index_dip': 7,
-    'index_pip': 6,
-    'index_mcp': 5,
-    
-    'middle_tip': 12,
-    'middle_dip': 11,
-    'middle_pip': 10,
-    'middle_mcp': 9,
-    
-    'ring_tip': 16,
-    'ring_dip': 15,
-    'ring_pip': 14,
-    'ring_mcp': 13,
-    
-    'pinky_tip': 20,
-    'pinky_dip': 19,
-    'pinky_pip': 18,
-    'pinky_mcp': 17,
-    
-    'wrist': 0,
-}
 
 class HandLandmarker:
+    KEY_POINTS = {
+        'THUMB_TIP': 4,
+        'THUMB_IP': 3,
+        'THUMB_MCP': 2,
+        
+        'INDEX_FINGER_TIP': 8,
+        'INDEX_FINGER_DIP': 7,
+        'INDEX_FINGER_PIP': 6,
+        'INDEX_FINGER_MCP': 5,
+        
+        'MIDDLE_FINGER_TIP': 12,
+        'MIDDLE_FINGER_DIP': 11,
+        'MIDDLE_FINGER_PIP': 10,
+        'MIDDLE_FINGER_MCP': 9,
+        
+        'RING_FINGER_TIP': 16,
+        'RING_FINGER_DIP': 15,
+        'RING_FINGER_PIP': 14,
+        'RING_FINGER_MCP': 13,
+        
+        'PINKY_TIP': 20,
+        'PINKY_DIP': 19,
+        'PINKY_PIP': 18,
+        'PINKY_MCP': 17,
+        
+        'WRIST': 0,
+    }
+    
     def __init__(self, event_manager: Event_Manager):
         self.event_manager = event_manager
         event_manager.write_event('hand_detected', False)
@@ -61,21 +62,7 @@ class HandLandmarker:
     def _handle_result(self, result, output_image: mp.Image, time_stamp: int):
         """Handle the results from the hand landmarker and update event manager"""
         self.detection_result = result
-        
-        self.event_manager.write_event('hand_detected', bool(result and result.hand_landmarks))
-        
-        if result and result.hand_landmarks:
-            landmarks = result.hand_landmarks[0]  # get first hand
-            
-            index_tip = landmarks[KEY_POINTS['index_tip']]
-            x = int(index_tip.x * output_image.width)
-            y = int(index_tip.y * output_image.height)
-            
-            self.event_manager.write_event('index_tip_x', x)
-            self.event_manager.write_event('index_tip_y', y)
-
-        else:
-            self.event_manager.write_event('hand_detected', False)
+        self.event_manager.write_event('hand_detected', bool(result.hand_landmarks))
     
 
     def detect_async(self, image, time_stamp):
