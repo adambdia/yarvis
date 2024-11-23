@@ -10,6 +10,7 @@ from mediapipe.tasks.python import vision
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import time
+from event_manager import Event_Manager
 
 
 DETECTION_RESULT = None
@@ -60,6 +61,14 @@ def display_result(result, output_image, timestamp_ms):
   global DETECTION_RESULT
   DETECTION_RESULT = result
 
+def func1(event_manager: Event_Manager):
+    event_manager.write_event('dog', 1)
+  
+def func2(event_manager: Event_Manager):
+  x = event_manager.read_event('dog')
+  print(x)  
+  
+
 def main():
   start_time = time.time_ns()
   BaseOptions = mp.tasks.BaseOptions
@@ -73,7 +82,7 @@ def main():
   running_mode=VisionRunningMode.LIVE_STREAM,
   result_callback=display_result)
   
-
+  event_manager = Event_Manager()
   try:
       print("Initializing Kinect...")
       kinect = KinectBridge()
@@ -87,7 +96,8 @@ def main():
                 # bgr_frame = frames['bgr']
                 depth_frame = frames['depth']
                 ir_frame = frames['ir']
-                
+                func1(event_manager)
+                func2(event_manager)                
                 ir_frame = ir_frame / 256.0
                 ir_frame = ir_frame.astype(np.uint8)
                 ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
