@@ -35,7 +35,7 @@ class Hand_Landmarker:
     
     def __init__(self, event_manager: Event_Manager, detection_confidence = 0.5, num_hands = 1, model_path = '$YARVISPATH/models/hand_landmarker.task'):
         self.event_manager = event_manager
-        event_manager.write_event('hand_detected', False)
+        event_manager.push_event('hand_detected', False)
 
         self.detection_result = None
         self.landmarker = None
@@ -63,7 +63,7 @@ class Hand_Landmarker:
     def _handle_result(self, result, output_image: mp.Image, time_stamp: int):
         """Handle the results from the hand landmarker and update event manager"""
         self.detection_result = result
-        self.event_manager.write_event('hand_detected', bool(result.hand_landmarks))
+        self.event_manager.push_event('hand_detected', bool(result.hand_landmarks))
     
 
     def detect_async(self, image, time_stamp):

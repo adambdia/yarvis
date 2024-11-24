@@ -78,12 +78,12 @@ def main():
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
                 hand_detector.detect_async(mp_image, time_stamp)
                 
-                if event_manager.read_event('hand_detected'): 
+                if event_manager.poll_event('hand_detected'): 
                     detection_result = hand_detector.get_latest_result()
                     ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
 
                     landmarks = detection_result.hand_landmarks[0]
-                    index_tip = landmarks[HandLandmarker.KEY_POINTS['INDEX_FINGER_TIP']]
+                    index_tip = landmarks[Hand_Landmarker.KEY_POINTS['INDEX_FINGER_TIP']]
 
                     x = int(index_tip.x * ir_frame.shape[1])
                     y = int(index_tip.y * ir_frame.shape[0])
