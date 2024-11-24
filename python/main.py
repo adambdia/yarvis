@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import cv2
-from kinect_bridge import KinectBridge 
 import traceback
 import numpy as np
 import mediapipe as mp
@@ -59,51 +58,38 @@ def main():
     start_time = time.time_ns()
     event_manager = Event_Manager()
     hand_detector = Hand_Detector(event_manager)
+    kinect_manager = Kinect(event_manager)
+    while True:
+        time_stamp = time_stamp = (time.time_ns() - start_time) * 1000
+        depth_frame, ir_frame = kinect_manager.get_frames()
+
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+        hand_detector.detect_async(mp_image, time_stamp)
+        
+        if event_manager.poll_event('hand_detected'): 
+            detection_result = hand_detector.get_latest_result()
+            ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
+
+            landmarks = detection_result.hand_landmarks[0]
+            index_tip = landmarks[Hand_Detector.KEY_POINTS['INDEX_FINGER_TIP']]
+
+            x = int(index_tip.x * ir_frame.shape[1])
+            y = int(index_tip.y * ir_frame.shape[0])
+            z = depth_frame[y][x]
+
+            #cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
+        
+        #cv2.imshow('Depth', depth_frame / 4500.0 )  # Normalize depth for visualization
+        cv2.imshow('IR', ir_frame)
+        event_manager.view_event()
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    hand_detector.close()
+    print("Closing")
+    cv2.destroyAllWindows()
     
-
-    try:
-        print("Initializing Kinect...")
-        kinect = KinectBridge()
-        print("Kinect initialized successfully")
-        kinect_manager = Kinect(kinect,start_time)
-        while True:
-            try:
-                # Get frames from Kinect
-                time_stamp, depth_frame, ir_frame = kinect_manager.get_frames()
-
-                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-                hand_detector.detect_async(mp_image, time_stamp)
-                
-                if event_manager.poll_event('hand_detected'): 
-                    detection_result = hand_detector.get_latest_result()
-                    ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
-
-                    landmarks = detection_result.hand_landmarks[0]
-                    index_tip = landmarks[Hand_Detector.KEY_POINTS['INDEX_FINGER_TIP']]
-
-                    x = int(index_tip.x * ir_frame.shape[1])
-                    y = int(index_tip.y * ir_frame.shape[0])
-                    z = depth_frame[y][x]
-
-                    #cv2.circle(ir_frame, (x,y), 10, (0,0,255), -1)
-                
-                #cv2.imshow('Depth', depth_frame / 4500.0 )  # Normalize depth for visualization
-                cv2.imshow('IR', ir_frame)
-                event_manager.view_event()
-
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-                    
-            except RuntimeError as e:
-                print(f"Frame capture error: {e}")
-                print("Stack trace:")
-                traceback.print_exc()
-                continue
-    
-    finally:
-        hand_detector.close()
-        cv2.destroyAllWindows()
-        print("Cleaning up...")
 
 
 if __name__ == "__main__":
