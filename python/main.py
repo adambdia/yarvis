@@ -61,7 +61,9 @@ def main():
     kinect_manager = Kinect(event_manager)
     while True:
         time_stamp = time_stamp = (time.time_ns() - start_time) * 1000
-        depth_frame, ir_frame = kinect_manager.get_frames()
+        kinect_manager.update_frames()
+        depth_frame = kinect_manager.get_depth_frame() 
+        ir_frame = kinect_manager.get_ir_frame()
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
         hand_detector.detect_async(mp_image, time_stamp)
