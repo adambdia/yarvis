@@ -1,4 +1,5 @@
 import mediapipe as mp
+from mediapipe.tasks.python.vision.hand_landmarker import HandLandmarkerResult
 import os
 from functools import partial
 from event_manager import Event_Manager
@@ -58,13 +59,13 @@ class Hand_Detector:
         self.landmarker = HandLandmarker.create_from_options(options)
     
 
-    def _handle_result(self, result, output_image: mp.Image, time_stamp: int):
+    def _handle_result(self, result: HandLandmarkerResult, output_image: mp.Image, time_stamp: int) -> None:
         """Handle the results from the hand landmarker and update event manager"""
         self.detection_result = result
         self.event_manager.push_event('hand_detected', bool(result.hand_landmarks))
     
 
-    def detect_async(self, image, time_stamp):
+    def detect_async(self, image: mp.Image, time_stamp: int):
         if self.landmarker:
             self.landmarker.detect_async(image, time_stamp)
     
