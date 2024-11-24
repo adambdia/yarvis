@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import cv2
-from kinect_bridge import KinectBridge
+from kinect_bridge import KinectBridge 
 import traceback
 import numpy as np
 import mediapipe as mp
@@ -9,6 +9,7 @@ from mediapipe.framework.formats import landmark_pb2
 import time
 from event_manager import Event_Manager
 from hand_detector import Hand_Detector
+from kinect_manager import Kinect
 
 
 def draw_landmarks_on_image(rgb_image, detection_result):
@@ -58,22 +59,17 @@ def main():
     start_time = time.time_ns()
     event_manager = Event_Manager()
     hand_detector = Hand_Detector(event_manager)
+    
 
     try:
         print("Initializing Kinect...")
         kinect = KinectBridge()
         print("Kinect initialized successfully")
+        kinect_manager = Kinect(kinect,start_time)
         while True:
             try:
                 # Get frames from Kinect
-                frames = kinect.get_frames()
-                time_stamp = (time.time_ns() - start_time) * 1000
-                # bgr_frame = frames['bgr']
-                depth_frame = frames['depth']
-                ir_frame = frames['ir']              
-                ir_frame = ir_frame / 256.0
-                ir_frame = ir_frame.astype(np.uint8)
-                ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
+                time_stamp, depth_frame, ir_frame = kinect_manager.get_frames()
 
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
                 hand_detector.detect_async(mp_image, time_stamp)
