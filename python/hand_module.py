@@ -4,7 +4,7 @@ from functools import partial
 from event_manager import Event_Manager
 
 
-class HandLandmarker:
+class Hand_Landmarker:
     KEY_POINTS = {
         'THUMB_TIP': 4,
         'THUMB_IP': 3,
@@ -33,7 +33,7 @@ class HandLandmarker:
         'WRIST': 0,
     }
     
-    def __init__(self, event_manager: Event_Manager):
+    def __init__(self, event_manager: Event_Manager, detection_confidence = 0.5, num_hands = 1, model_path = '$YARVISPATH/models/hand_landmarker.task'):
         self.event_manager = event_manager
         event_manager.write_event('hand_detected', False)
 
@@ -50,11 +50,12 @@ class HandLandmarker:
         
         options = self.HandLandmarkerOptions(
             base_options=self.BaseOptions(
-                model_asset_path=os.path.expandvars('$YARVISPATH/models/hand_landmarker.task')
+                model_asset_path=os.path.expandvars(model_path)
             ),
             running_mode=self.VisionRunningMode.LIVE_STREAM,
             result_callback=self._callback,
-            min_hand_detection_confidence=0.1
+            min_hand_detection_confidence=detection_confidence,
+            num_hands=num_hands
         )
         self.landmarker = self.HandLandmarker.create_from_options(options)
     
