@@ -4,7 +4,7 @@ from functools import partial
 from event_manager import Event_Manager
 
 
-class Hand_Landmarker:
+class Hand_Detector:
     KEY_POINTS = {
         'THUMB_TIP': 4,
         'THUMB_IP': 3,
@@ -33,31 +33,29 @@ class Hand_Landmarker:
         'WRIST': 0,
     }
     
-    def __init__(self, event_manager: Event_Manager, detection_confidence = 0.5, num_hands = 1, model_path = '$YARVISPATH/models/hand_landmarker.task'):
+    def __init__(self, event_manager: Event_Manager, detection_confidence=0.5, num_hands=1, model_path='$YARVISPATH/models/hand_landmarker.task'):
         self.event_manager = event_manager
         event_manager.push_event('hand_detected', False)
-
         self.detection_result = None
         self.landmarker = None
-        
-        self.BaseOptions = mp.tasks.BaseOptions
-        self.HandLandmarker = mp.tasks.vision.HandLandmarker
-        self.HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-        self.HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
-        self.VisionRunningMode = mp.tasks.vision.RunningMode
+        BaseOptions = mp.tasks.BaseOptions
+        HandLandmarker = mp.tasks.vision.HandLandmarker
+        HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+        HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
+        VisionRunningMode = mp.tasks.vision.RunningMode
         
         self._callback = partial(self._handle_result)
         
-        options = self.HandLandmarkerOptions(
-            base_options=self.BaseOptions(
+        options = HandLandmarkerOptions(
+            base_options=BaseOptions(
                 model_asset_path=os.path.expandvars(model_path)
             ),
-            running_mode=self.VisionRunningMode.LIVE_STREAM,
+            running_mode=VisionRunningMode.LIVE_STREAM,
             result_callback=self._callback,
             min_hand_detection_confidence=detection_confidence,
             num_hands=num_hands
         )
-        self.landmarker = self.HandLandmarker.create_from_options(options)
+        self.landmarker = HandLandmarker.create_from_options(options)
     
 
     def _handle_result(self, result, output_image: mp.Image, time_stamp: int):

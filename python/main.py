@@ -8,7 +8,7 @@ from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import time
 from event_manager import Event_Manager
-from hand_module import Hand_Landmarker
+from hand_detector import Hand_Detector
 
 
 def draw_landmarks_on_image(rgb_image, detection_result):
@@ -57,7 +57,7 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 def main():
     start_time = time.time_ns()
     event_manager = Event_Manager()
-    hand_detector = Hand_Landmarker(event_manager)
+    hand_detector = Hand_Detector(event_manager)
 
     try:
         print("Initializing Kinect...")
@@ -83,7 +83,7 @@ def main():
                     ir_frame = draw_landmarks_on_image(ir_frame, detection_result)
 
                     landmarks = detection_result.hand_landmarks[0]
-                    index_tip = landmarks[Hand_Landmarker.KEY_POINTS['INDEX_FINGER_TIP']]
+                    index_tip = landmarks[Hand_Detector.KEY_POINTS['INDEX_FINGER_TIP']]
 
                     x = int(index_tip.x * ir_frame.shape[1])
                     y = int(index_tip.y * ir_frame.shape[0])
