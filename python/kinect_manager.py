@@ -11,7 +11,7 @@ class Kinect:
             print("Kinect initialized successfully")
 
         except:
-              print("Kinect failed")
+            print("Kinect failed")
         self.event_manager = event_manager
         self.depth_frame = None
         self.ir_frame = None
@@ -27,7 +27,7 @@ class Kinect:
                     ir_frame = ir_frame / 256.0
                     ir_frame = ir_frame.astype(np.uint8)
                     ir_frame = cv2.cvtColor(ir_frame, cv2.COLOR_GRAY2BGR)
-
+                    ir_frame = cv2.flip(ir_frame, 0)
                     self.depth_frame = depth_frame
                     self.ir_frame = ir_frame
                 except RuntimeError as e:
