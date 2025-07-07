@@ -17,7 +17,7 @@ class Kinect:
         self.ir_frame = None
 
 
-    def update_frames(self):
+    def update_frames(self) -> np.ndarray:
                 # Get frames from Kinect
                 try:
                     frames = self.kinect.get_frames()
