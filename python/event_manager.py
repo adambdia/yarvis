@@ -4,7 +4,7 @@ class Event_Manager():
         self.events = {}
         
     def poll_event(self, event_name: str):
-        if event_name not in self.events.keys(): raise IndexError('\"{}\" event does not exist'.format(event_name))
+        if event_name not in self.events.keys(): return False
         return self.events[event_name]
     
     def push_event(self, event_name: str, value: any) -> None:

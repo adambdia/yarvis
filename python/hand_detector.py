@@ -3,10 +3,11 @@ from mediapipe.tasks.python.vision.hand_landmarker import HandLandmarkerResult
 import os
 from functools import partial
 from event_manager import Event_Manager
-
+import cv2
+import numpy as np
 
 class Hand_Detector:
-    KEY_POINTS = {
+    MP_KEY_POINTS = {
         'THUMB_TIP': 4,
         'THUMB_IP': 3,
         'THUMB_MCP': 2,
@@ -33,11 +34,11 @@ class Hand_Detector:
         
         'WRIST': 0,
     }
-    
+
     def __init__(self, event_manager: Event_Manager, detection_confidence=0.5, num_hands=1, model_path='$YARVISPATH/models/hand_landmarker.task'):
         self.event_manager = event_manager
         event_manager.push_event('hand_detected', False)
-        self.detection_result = None
+        self.uncalibrated_detection_result = None
         self.landmarker = None
         BaseOptions = mp.tasks.BaseOptions
         HandLandmarker = mp.tasks.vision.HandLandmarker
@@ -57,12 +58,38 @@ class Hand_Detector:
             num_hands=num_hands
         )
         self.landmarker = HandLandmarker.create_from_options(options)
+
+        self.detection_result = {}
+
+        self.calibration_matrix = False
+        try:
+            self.calibration_matrix = np.load('calibration.npy')
+            print('calibration found')
+        except:
+            print('no calibration found')
+  
     
 
     def _handle_result(self, result: HandLandmarkerResult, output_image: mp.Image, time_stamp: int) -> None:
         """Handle the results from the hand landmarker and update event manager"""
-        self.detection_result = result
-        self.event_manager.push_event('hand_detected', bool(result.hand_landmarks))
+        self.uncalibrated_detection_result = result
+        self.detection_result = {}
+        if self.calibration_matrix is not None and result.hand_landmarks:
+            landmarks = result.hand_landmarks[0]
+            for key_point in Hand_Detector.MP_KEY_POINTS:
+                pass
+                landmark = landmarks[Hand_Detector.MP_KEY_POINTS[key_point]]
+
+                raw_x = landmark.x * output_image.width
+                raw_y = landmark.y * output_image.height
+
+                landmark_pos = np.array([[(raw_x, raw_y)]], dtype=np.float32)
+                landmark_pos = cv2.perspectiveTransform(landmark_pos, self.calibration_matrix)
+                self.detection_result[key_point] = landmark_pos[0][0].astype(dtype=int)
+
+            
+        self.event_manager.push_event('uncalibrated_hand_result', bool(result.hand_landmarks))
+        self.event_manager.push_event('hand_result', bool(self.detection_result))
     
 
     def detect_async(self, image: mp.Image, time_stamp: int):
@@ -70,8 +97,12 @@ class Hand_Detector:
             self.landmarker.detect_async(image, time_stamp)
     
 
-    def get_latest_result(self):
+    def get_uncalibrated_result(self):
+        return self.uncalibrated_detection_result
+    
+    def get_calibrated_result(self):
         return self.detection_result
+
     
 
     def close(self):

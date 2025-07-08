@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from kinect_bridge import KinectBridge 
+import asyncio
+import queue
 
 class Kinect:
     
@@ -10,15 +12,15 @@ class Kinect:
             self.kinect = KinectBridge()
             print("Kinect initialized successfully")
 
-        except:
-            print("Kinect failed")
+        except e:
+            print("Kinect failed: %s", e)
         self.event_manager = event_manager
         self.depth_frame = None
         self.ir_frame = None
+        
 
 
-    def update_frames(self) -> np.ndarray:
-                # Get frames from Kinect
+    def update_frames(self) -> None:
                 try:
                     frames = self.kinect.get_frames()
                     # bgr_frame = frames['bgr']
@@ -38,4 +40,5 @@ class Kinect:
 
     def get_depth_frame(self):
         return self.depth_frame
+
     

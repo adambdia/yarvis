@@ -16,9 +16,10 @@ WINDOW_HEIGHT = 1080
 WINDOW_WIDTH = 1920
 WINDOW_NAME = 'yarvis'
 
-# colours
 BLACK = (0,0,0)
 WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
 def main():
   start_time = time.time_ns() #
@@ -54,11 +55,11 @@ def main():
     
     if event_manager.poll_event('hand_detected'):
       cv2.putText(window_frame, 'hand detected', (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 6)
-      detection_result = hand_detector.get_latest_result()
+      detection_result = hand_detector.get_uncalibrated_result()
       #window_frame = draw_landmarks_on_image(window_frame, detection_result)
 
       landmarks = detection_result.hand_landmarks[0]
-      index_tip = landmarks[Hand_Detector.KEY_POINTS['INDEX_FINGER_TIP']]
+      index_tip = landmarks[Hand_Detector.MP_KEY_POINTS['INDEX_FINGER_TIP']]
 
       raw_x = int(index_tip.x * ir_frame.shape[1])
       raw_y = int(index_tip.y * ir_frame.shape[0])
@@ -109,16 +110,16 @@ class App:
   def __init__(self):
     self.event_manager = Event_Manager()
     self.kinect = Kinect(self.event_manager)
-    #self.hand_detector = Hand_Detector(self.event_manager)
+    self.hand_detector = Hand_Detector(self.event_manager)
 
     pygame.init()
     self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN)
     pygame.display.set_caption(WINDOW_NAME)
     self.clock = pygame.time.Clock()
     self.font = pygame.font.Font(None, 100)
-
     self.running = True
-    pass
+
+    self.do_calibrate = False
 
   def quit(self):
     pygame.quit()
@@ -135,20 +136,29 @@ class App:
 
   def run(self):
     while self.running:
-      self.events()
+      self.events() # check inputs
       self.clock.tick()
       time_stamp = pygame.time.get_ticks()
       self.screen.fill(BLACK)
 
       self.kinect.update_frames()
       ir_frame = self.kinect.get_ir_frame()
-      ir_frame = np.rot90(ir_frame)
-      ir_frame = pygame.surfarray.make_surface(ir_frame)
-      self.screen.blit(ir_frame, (0,0))
+      # ir_frame = np.rot90(ir_frame)
+      # ir_frame = pygame.surfarray.make_surface(ir_frame)
+      # self.screen.blit(ir_frame, (0,0))
+
+      mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+      self.hand_detector.detect_async(mp_image, time_stamp)
+
+      if self.event_manager.poll_event('hand_result'):
+        detection_result = self.hand_detector.get_calibrated_result()
+        for key_point in Hand_Detector.MP_KEY_POINTS:
+          pos = detection_result[key_point]
+          pygame.draw.circle(self.screen, BLUE, pos, 10)
+      
 
       fps = self.clock.get_fps()
       fps = self.font.render("{:.1f}".format(fps), True, WHITE)
-      
       self.screen.blit(fps, (100, 1000))
 
       pygame.display.flip() # update the screen
@@ -158,4 +168,4 @@ class App:
 if __name__ == "__main__":
   yarvis = App()
   yarvis.run()
-  pass
+  #main()
