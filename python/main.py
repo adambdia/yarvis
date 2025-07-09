@@ -167,6 +167,8 @@ class App:
         self.do_calibrate = False
 
     def quit(self):
+        self.kinect.kinect.stop()
+        self.hand_detector.close()
         pygame.quit()
         self.running = False
 
@@ -188,12 +190,21 @@ class App:
 
             self.kinect.update_frames()
             ir_frame = self.kinect.get_ir_frame()
+            rgb_frame = self.kinect.get_rgb_frame()
+            if ir_frame is None:  # Can happen at startup
+                pygame.display.flip()
+                continue
+
+            # mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+            # self.hand_detector.detect_async(mp_image, time_stamp)
+
             # ir_frame = np.rot90(ir_frame)
             # ir_frame = pygame.surfarray.make_surface(ir_frame)
-            # self.screen.blit(ir_frame, (0,0))
+            # self.screen.blit(ir_frame, (0, 0))
 
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-            self.hand_detector.detect_async(mp_image, time_stamp)
+            rgb_frame = np.rot90(rgb_frame)
+            rgb_frame = pygame.surfarray.make_surface(rgb_frame)
+            self.screen.blit(rgb_frame, (0, 0))
 
             if self.event_manager.poll_event("hand_result"):
                 detection_result = self.hand_detector.get_calibrated_result()
@@ -211,5 +222,9 @@ class App:
 
 if __name__ == "__main__":
     yarvis = App()
-    yarvis.run()
-    # main()
+    try:
+        yarvis.run()
+        # main()
+    finally:
+        if yarvis.running:
+            yarvis.quit()
