@@ -191,20 +191,22 @@ class App:
             self.kinect.update_frames()
             ir_frame = self.kinect.get_ir_frame()
             rgb_frame = self.kinect.get_rgb_frame()
-            if ir_frame is None:  # Can happen at startup
-                pygame.display.flip()
-                continue
+            registered_frame = self.kinect.get_registered_frame()
 
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
             self.hand_detector.detect_async(mp_image, time_stamp)
 
-            ir_frame = np.rot90(ir_frame)
-            ir_frame = pygame.surfarray.make_surface(ir_frame)
-            self.screen.blit(ir_frame, (0, 0))
+            # ir_frame = np.rot90(ir_frame)
+            # ir_frame = pygame.surfarray.make_surface(ir_frame)
+            # self.screen.blit(ir_frame, (0, 0))
 
             # rgb_frame = np.rot90(rgb_frame)
             # rgb_frame = pygame.surfarray.make_surface(rgb_frame)
             # self.screen.blit(rgb_frame, (0, 0))
+
+            # registered_frame = np.rot90(registered_frame)
+            # registered_frame = pygame.surfarray.make_surface(registered_frame)
+            # self.screen.blit(registered_frame, (0, 0))
 
             if self.event_manager.poll_event("hand_result"):
                 detection_result = self.hand_detector.get_calibrated_result()

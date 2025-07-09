@@ -18,11 +18,13 @@ class Kinect:
         self.depth_frame = None
         self.ir_frame = None
         self.rgb_frame = None
+        self.registered = None
 
     def update_frames(self) -> None:
         try:
             frames = self.kinect.get_frames()
             # bgr_frame = frames['bgr']
+            registered_frame = frames["registered"]
             rgb_frame = frames["bgr"]
             depth_frame = frames["depth"]
             ir_frame = frames["ir"]
@@ -33,6 +35,7 @@ class Kinect:
             self.depth_frame = depth_frame
             self.ir_frame = ir_frame
             self.rgb_frame = cv2.cvtColor(rgb_frame, cv2.COLOR_BGR2RGB)
+            self.registered = cv2.cvtColor(registered_frame, cv2.COLOR_BGR2RGB)
         except RuntimeError as e:
             print(e)
 
@@ -44,3 +47,12 @@ class Kinect:
 
     def get_rgb_frame(self):
         return self.rgb_frame
+
+    def get_registered_frame(self):
+        return self.registered
+
+    def get_point_xyz(self, x: int, y: int):
+        return self.kinect.get_point_xyz(x, y)
+
+    def get_point_xyzrgb(self, x: int, y: int):
+        return self.kinect.get_point_xyzrgb(x, y)
