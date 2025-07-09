@@ -195,16 +195,16 @@ class App:
                 pygame.display.flip()
                 continue
 
-            # mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-            # self.hand_detector.detect_async(mp_image, time_stamp)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+            self.hand_detector.detect_async(mp_image, time_stamp)
 
-            # ir_frame = np.rot90(ir_frame)
-            # ir_frame = pygame.surfarray.make_surface(ir_frame)
-            # self.screen.blit(ir_frame, (0, 0))
+            ir_frame = np.rot90(ir_frame)
+            ir_frame = pygame.surfarray.make_surface(ir_frame)
+            self.screen.blit(ir_frame, (0, 0))
 
-            rgb_frame = np.rot90(rgb_frame)
-            rgb_frame = pygame.surfarray.make_surface(rgb_frame)
-            self.screen.blit(rgb_frame, (0, 0))
+            # rgb_frame = np.rot90(rgb_frame)
+            # rgb_frame = pygame.surfarray.make_surface(rgb_frame)
+            # self.screen.blit(rgb_frame, (0, 0))
 
             if self.event_manager.poll_event("hand_result"):
                 detection_result = self.hand_detector.get_calibrated_result()
