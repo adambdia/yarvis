@@ -8,12 +8,12 @@ import queue
 class Kinect:
     def __init__(self, event_manager) -> None:
         try:
-            print("Initializing Kinect...")
+            print("[DEBUG] Initializing Kinect...")
             self.kinect = KinectBridge()
-            print("Kinect initialized successfully")
+            print("[DEBUG] Kinect initialized successfully")
 
         except Exception as e:
-            print("Kinect failed: %s", e)
+            print("[DEBUG] Kinect failed: %s", e)
         self.event_manager = event_manager
         self.depth_frame = None
         self.ir_frame = None

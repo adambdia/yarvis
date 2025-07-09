@@ -15,33 +15,6 @@
 
 namespace py = pybind11;
 
-// template <typename T>
-// py::array_t<T> copy_array(const py::array_t<T> &input)
-// {
-//     // Request a buffer descriptor from Python
-//     py::buffer_info buf = input.request();
-
-//     // Create a new array with same shape and data type
-//     py::array_t<T> result(buf.shape);
-
-//     // Get pointers to input and output buffers
-//     auto result_buf = result.request();
-//     T *ptr_in = static_cast<T *>(buf.ptr);
-//     T *ptr_out = static_cast<T *>(result_buf.ptr);
-
-//     // Calculate total size
-//     size_t total_size = 1;
-//     for (size_t i = 0; i < buf.shape.size(); i++)
-//     {
-//         total_size *= buf.shape[i];
-//     }
-
-//     // Copy the data
-//     std::memcpy(ptr_out, ptr_in, sizeof(T) * total_size);
-
-//     return result;
-// }
-
 class KinectBridge
 {
 private:
@@ -69,7 +42,7 @@ private:
         {
             if (!listener->waitForNewFrame(frames, 10 * 1000))
             {
-                std::cout << "Timeout waiting for frames!" << std::endl;
+                std::cout << "[DEBUG] Timeout waiting for frames!" << std::endl;
                 continue;
             }
 
@@ -90,7 +63,7 @@ private:
 
             listener->release(frames);
         }
-        std::cout << "Acquisition loop stopped." << std::endl;
+        std::cout << "[DEBUG] Acquisition loop stopped." << std::endl;
     }
 
 
@@ -102,17 +75,17 @@ public:
         {
             if (freenect2.enumerateDevices() == 0)
             {
-                throw std::runtime_error("No Kinect devices found!");
+                throw std::runtime_error("[DEBUG] No Kinect devices found!");
             }
 
-            std::cout << "Opening default device..." << std::endl;
+            std::cout << "[DEBUG] Opening default device..." << std::endl;
             dev = freenect2.openDefaultDevice();
             if (!dev)
             {
-                throw std::runtime_error("Failed to open Kinect device!");
+                throw std::runtime_error("[DEBUG] Failed to open Kinect device!");
             }
 
-            std::cout << "Creating listener..." << std::endl;
+            std::cout << "[DEBUG] Creating listener..." << std::endl;
             listener = new libfreenect2::SyncMultiFrameListener(
                 libfreenect2::Frame::Color |
                 libfreenect2::Frame::Depth |
@@ -121,17 +94,17 @@ public:
             dev->setColorFrameListener(listener);
             dev->setIrAndDepthFrameListener(listener);
 
-            std::cout << "Starting device..." << std::endl;
+            std::cout << "[DEBUG] Starting device..." << std::endl;
             if (!dev->start())
             {
-                throw std::runtime_error("Failed to start Kinect device!");
+                throw std::runtime_error("[DEBUG] Failed to start Kinect device!");
             }
-            std::cout << "Device started successfully" << std::endl;
+            std::cout << "[DEBUG] Device started successfully" << std::endl;
         }
         catch (const std::exception &e)
         {
             stop();
-            throw std::runtime_error(std::string("KinectBridge initialization failed: ") + e.what());
+            throw std::runtime_error(std::string("[DEBUG] KinectBridge initialization failed: ") + e.what());
         }
 
         ir_mat = cv::Mat(424, 512, CV_32FC1);
@@ -171,75 +144,6 @@ public:
 
     py::dict getFrames()
     {
-        // try
-        // {
-        //     if (!listener)
-        //     {
-        //         throw std::runtime_error("Device not initialized!");
-        //     }
-
-        //     //std::cout << "Waiting for new frame..." << std::endl;
-        //     if (!listener->waitForNewFrame(frames, 10 * 1000))
-        //     {
-        //         throw std::runtime_error("Timeout waiting for frames!");
-        //     }
-
-        //     //std::cout << "Got new frame, processing..." << std::endl;
-        //     libfreenect2::Frame *rgb = frames[libfreenect2::Frame::Color];
-        //     libfreenect2::Frame *depth = frames[libfreenect2::Frame::Depth];
-        //     libfreenect2::Frame *ir = frames[libfreenect2::Frame::Ir];
-
-        //     if (!rgb || !depth || !ir)
-        //     {
-        //         listener->release(frames);
-        //         throw std::runtime_error("Failed to get valid frames!");
-        //     }
-
-        //     // // Create numpy arrays directly from the frame data
-        //     // py::array_t<uint8_t> rgb_array(
-        //     //     py::buffer_info(
-        //     //         static_cast<uint8_t *>(rgb->data),        // Pointer to data
-        //     //         sizeof(uint8_t),                          // Size of one scalar
-        //     //         py::format_descriptor<uint8_t>::format(), // Python struct-style format descriptor
-        //     //         3,                                        // Number of dimensions
-        //     //         {rgb->height, rgb->width, 4},             // Shape
-        //     //         {rgb->width * 4,                          // Strides (in elements)
-        //     //          4,
-        //     //          1}));
-
-        //     py::array_t<float> depth_array({depth->height, depth->width},
-        //                                    {depth->width * sizeof(float), sizeof(float)},
-        //                                    reinterpret_cast<float*>(depth->data));
-            
-        //     py::array_t<float> ir_array({ir->height, ir->width}, 
-        //                                   {ir->width * sizeof(float), sizeof(float)},
-        //                                   reinterpret_cast<float*>(ir->data));
-
-        //     // Create copies of the data since we'll release the frames
-        //     // py::array_t<uint8_t> rgb_copy = copy_array(rgb_array);
-        //     py::array_t<float> depth_copy = copy_array(depth_array);
-        //     py::array_t<float> ir_copy = copy_array(ir_array);
-
-        //     // Release the frames
-        //     listener->release(frames);
-
-        //     // Return the copied arrays
-        //     py::dict result;
-        //     // result["rgb"] = rgb_copy;
-        //     result["depth"] = depth_copy;
-        //     result["ir"] = ir_copy;
-        //     return result;
-        // }
-        // catch (const std::exception &e)
-        // {
-        //     std::cerr << "Error in getFrames: " << e.what() << std::endl;
-        //     if (frames.size() > 0)
-        //     {
-        //         listener->release(frames);
-        //     }
-        //     throw;
-        // }
-
         std::lock_guard<std::mutex> lock(frame_mutex);
 
         py::array_t<float> depth_array = py::array_t<float>(

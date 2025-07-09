@@ -5,6 +5,7 @@ from functools import partial
 from event_manager import Event_Manager
 import cv2
 import numpy as np
+import threading
 
 
 class Hand_Detector:
@@ -38,6 +39,7 @@ class Hand_Detector:
         num_hands=1,
         model_path="$YARVISPATH/models/hand_landmarker.task",
     ):
+        self._lock = threading.Lock()
         self.event_manager = event_manager
         event_manager.push_event("hand_detected", False)
         self.uncalibrated_detection_result = None
@@ -64,45 +66,52 @@ class Hand_Detector:
         self.calibration_matrix = None
         try:
             self.calibration_matrix = np.load("calibration.npy")
-            print("calibration found")
+            print("[DEBUG] calibration found")
         except:
-            print("no calibration found")
+            print("[DEBUG] no calibration found")
 
     def _handle_result(
         self, result: HandLandmarkerResult, output_image: mp.Image, time_stamp: int
     ) -> None:
         """Handle the results from the hand landmarker and update event manager"""
-        self.uncalibrated_detection_result = result
-        self.detection_result = {}
-        if self.calibration_matrix is not None and result.hand_landmarks:
-            landmarks = result.hand_landmarks[0]
-            for key_point in Hand_Detector.MP_KEY_POINTS:
-                pass
-                landmark = landmarks[Hand_Detector.MP_KEY_POINTS[key_point]]
+        with self._lock:
+            self.uncalibrated_detection_result = result
+            self.detection_result = {}
+            print(
+                f"[DEBUG] _handle_result: hands={len(result.hand_landmarks)}, ts={time_stamp}"
+            )
+            if result.hand_landmarks:
+                landmarks = result.hand_landmarks[0]
+                for key_point in Hand_Detector.MP_KEY_POINTS:
+                    landmark = landmarks[Hand_Detector.MP_KEY_POINTS[key_point]]
+                    raw_x = landmark.x * output_image.width
+                    raw_y = landmark.y * output_image.height
+                    landmark_pos = np.array([[(raw_x, raw_y)]], dtype=np.float32)
 
-                raw_x = landmark.x * output_image.width
-                raw_y = landmark.y * output_image.height
+                    if self.calibration_matrix is not None:
+                        landmark_pos = cv2.perspectiveTransform(
+                            landmark_pos, self.calibration_matrix
+                        )
+                    self.detection_result[key_point] = landmark_pos[0][0].astype(
+                        dtype=int
+                    )
 
-                landmark_pos = np.array([[(raw_x, raw_y)]], dtype=np.float32)
-                landmark_pos = cv2.perspectiveTransform(
-                    landmark_pos, self.calibration_matrix
-                )
-                self.detection_result[key_point] = landmark_pos[0][0].astype(dtype=int)
-
-        self.event_manager.push_event(
-            "uncalibrated_hand_result", bool(result.hand_landmarks)
-        )
-        self.event_manager.push_event("hand_result", bool(self.detection_result))
+            self.event_manager.push_event(
+                "uncalibrated_hand_result", bool(result.hand_landmarks)
+            )
+            self.event_manager.push_event("hand_result", bool(self.detection_result))
 
     def detect_async(self, image: mp.Image, time_stamp: int):
         if self.landmarker:
             self.landmarker.detect_async(image, time_stamp)
 
     def get_uncalibrated_result(self):
-        return self.uncalibrated_detection_result
+        with self._lock:
+            return self.uncalibrated_detection_result
 
     def get_calibrated_result(self):
-        return self.detection_result
+        with self._lock:
+            return self.detection_result
 
     def close(self):
         if self.landmarker:
