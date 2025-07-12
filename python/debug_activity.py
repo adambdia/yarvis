@@ -10,20 +10,32 @@ class debug_activy(Activity):
         self.kinect = kinect_manager
         self.hand_detector = hand_detector
         self.font = pygame.font.Font(None, 100)
+        
+        self.display_ir = False
+        self.display_rgb = False
+        self.do_calibrate = False
 
-    def events(self, event):
-        #for the calibration stuff eventually
-        pass
+    def events(self, event, key):
+        if key == pygame.K_i: 
+            self.display_ir = ~self.display_ir
 
-    def update(self, ir_frame):
+        if key == pygame.K_c:
+            self.do_calibrate = ~self.do_calibrate
+            
 
-        ir_frame = np.rot90(ir_frame) 
-        ir_frame = pygame.surfarray.make_surface(ir_frame)
-        self.screen.blit(ir_frame, (0, 0))
+    def update(self):
+        ir_frame = self.kinect.get_ir_frame()
+        rgb_frame = self.kinect.get_rgb_frame()
+        
+        if self.display_ir:
+            ir_frame = np.rot90(ir_frame) 
+            ir_frame = pygame.surfarray.make_surface(ir_frame)
+            self.screen.blit(ir_frame, (0, 0))
 
-        # rgb_frame = np.rot90(rgb_frame)
-        # rgb_frame = pygame.surfarray.make_surface(rgb_frame)
-        # self.screen.blit(rgb_frame, (0, 0))
+        if self.display_rgb:
+            rgb_frame = np.rot90(rgb_frame)
+            rgb_frame = pygame.surfarray.make_surface(rgb_frame)
+            self.screen.blit(rgb_frame, (0, 0))
 
         # registered_frame = np.rot90(registered_frame)
         # registered_frame = pygame.surfarray.make_surface(registered_frame)

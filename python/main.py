@@ -1,19 +1,17 @@
 #!/usr/bin/env python
-import numpy as np
+
 import mediapipe as mp
 from event_manager import Event_Manager
 from hand_detector import Hand_Detector
 from kinect_manager import Kinect
 from debug_activity import debug_activy
 import pygame
-from common import *
+import common
 
 
 WINDOW_HEIGHT = 1080
 WINDOW_WIDTH = 1920
 WINDOW_NAME = "yarvis"
-
-
 
 class App:
     def __init__(self):
@@ -37,12 +35,13 @@ class App:
     def events(self):
         for event in pygame.event.get():
             key = None
-            self.current_activity.events(event)
             if event.type == pygame.KEYDOWN:
                 key = event.key
 
             if key == pygame.K_ESCAPE or event.type == pygame.QUIT:
                 self.quit()
+            
+            self.current_activity.events(event, key)
 
     def run(self):
         counter = 0
@@ -50,7 +49,7 @@ class App:
             self.events()
             self.clock.tick()
             time_stamp = pygame.time.get_ticks()
-            self.screen.fill(BLACK)
+            self.screen.fill(common.BLACK)
 
             self.kinect.update_frames()
             ir_frame = self.kinect.get_ir_frame()
@@ -62,7 +61,7 @@ class App:
                 self.hand_detector.detect_async(mp_image, time_stamp)
                 counter = 0
 
-            self.current_activity.update(ir_frame)
+            self.current_activity.update()
 
             
             counter += 1
