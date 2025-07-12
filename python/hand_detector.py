@@ -47,7 +47,6 @@ class Hand_Detector:
         BaseOptions = mp.tasks.BaseOptions
         HandLandmarker = mp.tasks.vision.HandLandmarker
         HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-        HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
         VisionRunningMode = mp.tasks.vision.RunningMode
 
         self._callback = partial(self._handle_result)
@@ -67,8 +66,8 @@ class Hand_Detector:
         try:
             self.calibration_matrix = np.load("calibration.npy")
             print("[DEBUG] calibration found")
-        except:
-            print("[DEBUG] no calibration found")
+        except Exception as e:
+            print(f"[DEBUG] no calibration found: {e}")
 
     def _handle_result(
         self, result: HandLandmarkerResult, output_image: mp.Image, time_stamp: int

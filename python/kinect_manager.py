@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 from kinect_bridge import KinectBridge
-import asyncio
-import queue
 
 
 class Kinect:
@@ -36,12 +34,12 @@ class Kinect:
             self.ir_frame = ir_frame
             try:
                 self.rgb_frame = cv2.cvtColor(rgb_frame, cv2.COLOR_BGR2RGB)
-            except:
-                pass
+            except Exception as e:
+                print(e)
             try:
                 self.registered = cv2.cvtColor(registered_frame, cv2.COLOR_BGR2RGB)
-            except:
-                pass
+            except Exception as e:
+                print(e)
         except RuntimeError as e:
             print(e)
 
