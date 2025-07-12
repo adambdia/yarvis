@@ -34,8 +34,14 @@ class Kinect:
             ir_frame = cv2.flip(ir_frame, 0)
             self.depth_frame = depth_frame
             self.ir_frame = ir_frame
-            self.rgb_frame = cv2.cvtColor(rgb_frame, cv2.COLOR_BGR2RGB)
-            self.registered = cv2.cvtColor(registered_frame, cv2.COLOR_BGR2RGB)
+            try:
+                self.rgb_frame = cv2.cvtColor(rgb_frame, cv2.COLOR_BGR2RGB)
+            except:
+                pass
+            try:
+                self.registered = cv2.cvtColor(registered_frame, cv2.COLOR_BGR2RGB)
+            except:
+                pass
         except RuntimeError as e:
             print(e)
 

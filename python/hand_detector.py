@@ -77,9 +77,9 @@ class Hand_Detector:
         with self._lock:
             self.uncalibrated_detection_result = result
             self.detection_result = {}
-            print(
-                f"[DEBUG] _handle_result: hands={len(result.hand_landmarks)}, ts={time_stamp}"
-            )
+            # print(
+            #     f"[DEBUG] _handle_result: hands={len(result.hand_landmarks)}, ts={time_stamp}"
+            # )
             if result.hand_landmarks:
                 landmarks = result.hand_landmarks[0]
                 for key_point in Hand_Detector.MP_KEY_POINTS:

@@ -182,6 +182,7 @@ class App:
                 self.quit()
 
     def run(self):
+        counter = 0
         while self.running:
             self.events()  # check inputs
             self.clock.tick()
@@ -192,13 +193,15 @@ class App:
             ir_frame = self.kinect.get_ir_frame()
             rgb_frame = self.kinect.get_rgb_frame()
             registered_frame = self.kinect.get_registered_frame()
+            #cv2.resize(ir_frame, (0,0), fx = 0.5, fy = 0.5, interpolation = cv2.INTER_AREA)
+            if counter == 4:
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
+                self.hand_detector.detect_async(mp_image, time_stamp)
+                counter = 0
 
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
-            self.hand_detector.detect_async(mp_image, time_stamp)
-
-            # ir_frame = np.rot90(ir_frame)
-            # ir_frame = pygame.surfarray.make_surface(ir_frame)
-            # self.screen.blit(ir_frame, (0, 0))
+            ir_frame = np.rot90(ir_frame) 
+            ir_frame = pygame.surfarray.make_surface(ir_frame)
+            self.screen.blit(ir_frame, (0, 0))
 
             # rgb_frame = np.rot90(rgb_frame)
             # rgb_frame = pygame.surfarray.make_surface(rgb_frame)
@@ -209,6 +212,8 @@ class App:
             # self.screen.blit(registered_frame, (0, 0))
 
             if self.event_manager.poll_event("hand_result"):
+                hand_detected = self.font.render("hand detected", True, BLUE)
+                self.screen.blit(hand_detected, (100, 900))
                 detection_result = self.hand_detector.get_calibrated_result()
                 for key_point in Hand_Detector.MP_KEY_POINTS:
                     pos = detection_result[key_point]
@@ -219,7 +224,7 @@ class App:
             self.screen.blit(fps, (100, 1000))
 
             pygame.display.flip()  # update the screen
-            pass
+            counter += 1
 
 
 if __name__ == "__main__":
