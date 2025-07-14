@@ -33,6 +33,10 @@ class App:
         self.running = False
 
     def events(self):
+        if self.event_manager.poll_event("update_matrix"):
+            self.hand_detector.calibration_matrix = self.current_activity.calib_matrix
+            self.event_manager.push_event("update_matrix", False)
+
         for event in pygame.event.get():
             key = None
             if event.type == pygame.KEYDOWN:
@@ -56,7 +60,7 @@ class App:
             # rgb_frame = self.kinect.get_rgb_frame()
             # registered_frame = self.kinect.get_registered_frame()
 
-            if counter == 4:
+            if counter == 4: # send frame to model every four frames, runs better
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=ir_frame)
                 self.hand_detector.detect_async(mp_image, time_stamp)
                 counter = 0

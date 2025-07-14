@@ -4,7 +4,7 @@ class Activity:
         self.event_manager = event_manager
         self.clock = clock
 
-    def events(self, key):
+    def events(self, event, key):
         # check key, no for loop
         pass
 
