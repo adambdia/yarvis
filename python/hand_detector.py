@@ -6,7 +6,7 @@ from event_manager import Event_Manager
 import cv2
 import numpy as np
 import threading
-
+import common
 
 class Hand_Detector:
     MP_KEY_POINTS = {
@@ -106,6 +106,15 @@ class Hand_Detector:
     def get_calibrated_result(self):
         with self._lock:
             return self.detection_result
+
+    def get_uncalibrated_landmark_pos(self, hand: int, landmark_key):
+        landmark = self.get_uncalibrated_result().hand_landmarks[hand][landmark_key]
+        x = landmark.x * common.IR_WIDTH
+        y = landmark.y * common.IR_HEIGHT
+        return (x, y)
+
+    def get_landmark_pos(self, hand, landmark_key):
+        return self.get_calibrated_result()[hand][landmark_key]
 
     def close(self):
         if self.landmarker:

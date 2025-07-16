@@ -16,7 +16,7 @@ class debug_activy(Activity):
         
         self.display_ir = False
         self.display_rgb = False
-        self.display_landmarks = True
+        self.display_landmarks = False
         self.do_calibrate = False
 
         self.calib_points = [(200, 90), (150, 950), (1750, 120), (1600, 800)]
@@ -60,11 +60,7 @@ class debug_activy(Activity):
                         self.screen)
         
         if self.save_point_flag and self.event_manager.poll_event("uncalibrated_hand_result"):
-            result =  self.hand_detector.get_uncalibrated_result()
-            index_pos = result.hand_landmarks[0][Hand_Detector.MP_KEY_POINTS["INDEX_FINGER_TIP"]]
-            index_x = index_pos.x * ir_frame.shape[1] # mediapipe landmark coordinates go from 0 to 1, we need to scale it up to the frame size
-            index_y = index_pos.y * ir_frame.shape[0]
-            index_pos = (index_x, index_y) 
+            index_pos = self.hand_detector.get_uncalibrated_landmark_pos(0, Hand_Detector.MP_KEY_POINTS['INDEX_FINGER_TIP'])
             self.calib_attempts.append(index_pos)
             self.save_point_flag = False
         
@@ -81,10 +77,9 @@ class debug_activy(Activity):
         if self.event_manager.poll_event("hand_result"):
             hand_detected = self.font.render("hand detected", True, common.BLUE)
             self.screen.blit(hand_detected, (100, 900))
-            detection_result = self.hand_detector.get_calibrated_result()
-            for hand in detection_result:    
+            for hand in range(common.NUM_HANDS):    
                 for key_point in Hand_Detector.MP_KEY_POINTS:
-                    pos = hand[key_point]
+                    pos = self.hand_detector.get_landmark_pos(hand, key_point)
                     pygame.draw.circle(self.screen, common.BLUE, pos, 10)
                     # if key_point == "INDEX_FINGER_TIP":
                     #     x, y, z = self.kinect.get_point_xyz(pos[0], pos[1])

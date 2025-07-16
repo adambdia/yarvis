@@ -8,20 +8,15 @@ from debug_activity import debug_activy
 import pygame
 import common
 
-
-WINDOW_HEIGHT = 1080
-WINDOW_WIDTH = 1920
-WINDOW_NAME = "yarvis"
-
 class App:
     def __init__(self):
         self.event_manager = Event_Manager()
         self.kinect = Kinect(self.event_manager)
-        self.hand_detector = Hand_Detector(self.event_manager, detection_confidence=0.8, num_hands=1)
+        self.hand_detector = Hand_Detector(self.event_manager, detection_confidence=common.HAND_DETECTION_CONFIDENCE, num_hands=common.NUM_HANDS)
 
         pygame.init()
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN)
-        pygame.display.set_caption(WINDOW_NAME)
+        self.screen = pygame.display.set_mode((common.WINDOW_WIDTH, common.WINDOW_HEIGHT), pygame.FULLSCREEN)
+        pygame.display.set_caption(common.WINDOW_NAME)
         self.clock = pygame.time.Clock()
         self.running = True
         self.current_activity = debug_activy(self.screen, self.event_manager, self.clock, self.kinect, self.hand_detector)
