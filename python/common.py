@@ -8,9 +8,10 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 def cv_to_pygame(frame):
-    frame = np.rot90(frame)
-    frame = pygame.surfarray.make_surface(frame)
-    return frame
+    tmp = np.copy(frame)
+    tmp = np.rot90(tmp)
+    tmp = pygame.surfarray.make_surface(tmp)
+    return tmp
 
 # draw text func
 def draw_text(text, pos, colour, font, screen):

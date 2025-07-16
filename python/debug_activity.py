@@ -99,8 +99,8 @@ class debug_activy(Activity):
         ir_frame = self.kinect.get_ir_frame()
 
         if self.display_ir:
-            ir_frame = common.cv_to_pygame(ir_frame)
-            self.screen.blit(ir_frame, (0, 0))
+            ir_frame_pg = common.cv_to_pygame(ir_frame)
+            self.screen.blit(ir_frame_pg, (0, 0))
 
         if self.display_rgb:
             rgb_frame = self.kinect.get_rgb_frame()
