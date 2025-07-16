@@ -60,7 +60,7 @@ class Hand_Detector:
         )
         self.landmarker = HandLandmarker.create_from_options(options)
 
-        self.detection_result = {}
+        self.detection_result = []
 
         self.calibration_matrix = None
         try:
@@ -75,20 +75,22 @@ class Hand_Detector:
         """Handle the results from the hand landmarker and update event manager"""
         with self._lock:
             self.uncalibrated_detection_result = result
-            self.detection_result = {}
+            self.detection_result = []
             if result.hand_landmarks:
-                landmarks = result.hand_landmarks[0]
-                for key_point in Hand_Detector.MP_KEY_POINTS:
-                    landmark = landmarks[Hand_Detector.MP_KEY_POINTS[key_point]]
-                    raw_x = landmark.x * output_image.width
-                    raw_y = landmark.y * output_image.height
-                    landmark_pos = np.array([[(raw_x, raw_y)]], dtype=np.float32)
+                for hand in result.hand_landmarks:
+                    current_result = {}
+                    for key_point in Hand_Detector.MP_KEY_POINTS:
+                        landmark = hand[Hand_Detector.MP_KEY_POINTS[key_point]]
+                        raw_x = landmark.x * output_image.width
+                        raw_y = landmark.y * output_image.height
+                        landmark_pos = np.array([[(raw_x, raw_y)]], dtype=np.float32)
 
-                    if self.calibration_matrix is not None:
-                        landmark_pos = cv2.perspectiveTransform(
-                            landmark_pos, self.calibration_matrix
-                        )
-                    self.detection_result[key_point] = landmark_pos[0][0].astype(dtype=int)
+                        if self.calibration_matrix is not None:
+                            landmark_pos = cv2.perspectiveTransform(
+                                landmark_pos, self.calibration_matrix
+                            )
+                        current_result[key_point] = landmark_pos[0][0].astype(dtype=int)
+                        self.detection_result.append(current_result)
 
             self.event_manager.push_event("uncalibrated_hand_result", bool(result.hand_landmarks))
             self.event_manager.push_event("hand_result", bool(self.detection_result))

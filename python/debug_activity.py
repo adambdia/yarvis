@@ -16,7 +16,7 @@ class debug_activy(Activity):
         
         self.display_ir = False
         self.display_rgb = False
-        self.display_landmarks = False
+        self.display_landmarks = True
         self.do_calibrate = False
 
         self.calib_points = [(200, 90), (150, 950), (1750, 120), (1600, 800)]
@@ -82,11 +82,12 @@ class debug_activy(Activity):
             hand_detected = self.font.render("hand detected", True, common.BLUE)
             self.screen.blit(hand_detected, (100, 900))
             detection_result = self.hand_detector.get_calibrated_result()
-            for key_point in Hand_Detector.MP_KEY_POINTS:
-                pos = detection_result[key_point]
-                pygame.draw.circle(self.screen, common.BLUE, pos, 10)
-                # if key_point == "INDEX_FINGER_TIP":
-                #     x, y, z = self.kinect.get_point_xyz(pos[0], pos[1])
+            for hand in detection_result:    
+                for key_point in Hand_Detector.MP_KEY_POINTS:
+                    pos = hand[key_point]
+                    pygame.draw.circle(self.screen, common.BLUE, pos, 10)
+                    # if key_point == "INDEX_FINGER_TIP":
+                    #     x, y, z = self.kinect.get_point_xyz(pos[0], pos[1])
         if self.event_manager.poll_event("uncalibrated_hand_result"):
             detection_result = self.hand_detector.get_uncalibrated_result()
             uncalib_index_landmark = detection_result.hand_landmarks[0][Hand_Detector.MP_KEY_POINTS["INDEX_FINGER_TIP"]]

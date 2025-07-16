@@ -17,7 +17,7 @@ class App:
     def __init__(self):
         self.event_manager = Event_Manager()
         self.kinect = Kinect(self.event_manager)
-        self.hand_detector = Hand_Detector(self.event_manager)
+        self.hand_detector = Hand_Detector(self.event_manager, detection_confidence=0.8, num_hands=1)
 
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN)
